@@ -117,7 +117,7 @@ If WIN is nil, the selected window is splitted."
     (with-current-buffer doc-buffer
       (save-restriction
         (widen)
-        (buffer-substring-no-properties
+        (buffer-substring ;; -no-properties
          (if start start (point-min))
          (point-max))))))
 
