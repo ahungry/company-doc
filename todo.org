@@ -1,0 +1,3 @@
+* TODO Fix issue where c-j and c-k binds do not work after custom company-frontend calls
+Not sure what is triggering this, company-quickhelp runs into a
+similar problem.  These binds are set up by one of the evil-collection modes.
