@@ -60,13 +60,13 @@
   "Select the buffer BUF in the window WIN by splitting it.
 If WIN is nil, the selected window is splitted."
   (let* ((win (or win (selected-window)))
-	 (size
-	  (let ((rest (- (window-height win) 15)))
-	    (if (<= rest 3)
-		;; To avoid an error due to a too small window.
-		nil
-	      rest)))
-	 (new-win (split-window win size)))
+         (size
+          (let ((rest (- (window-height win) 15)))
+            (if (<= rest 3)
+                ;; To avoid an error due to a too small window.
+                nil
+              rest)))
+         (new-win (split-window win size)))
     (select-window new-win)
     (switch-to-buffer buf)))
 
@@ -139,7 +139,7 @@ If WIN is nil, the selected window is splitted."
 
 (defun company-doc-frontend (command)
   "COMMAND is implemented according to the `company-mode' frontends interface."
-  (case command
+  (cl-case command
     ;; (pre-command (message "pre: %s" (car company-candidates)))
     ;; (post-command (message "post: %s" (car company-candidates)))
     (post-command (company-doc--popper-show (company-doc--get-doc-string)))
@@ -152,3 +152,4 @@ If WIN is nil, the selected window is splitted."
   (add-to-list 'company-frontends #'company-doc-frontend :append))
 
 (provide 'company-doc)
+;;; company-doc.el ends here
