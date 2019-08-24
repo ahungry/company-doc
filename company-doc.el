@@ -90,12 +90,62 @@ If WIN is nil, the selected window is splitted."
     (select-window this-win)
     s))
 
+;; (defun company-show-doc-buffer ()
+;;   "Temporarily show the documentation buffer for the selection."
+;;   (interactive)
+;;   (let (other-window-scroll-buffer)
+;;     (company--electric-do
+;;       (let* ((selected (nth company-selection company-candidates))
+;;              (doc-buffer (or (company-call-backend 'doc-buffer selected)
+;;                              (user-error "No documentation available")))
+;;              start)
+;;         (when (consp doc-buffer)
+;;           (setq start (cdr doc-buffer)
+;;                 doc-buffer (car doc-buffer)))
+;;         (setq other-window-scroll-buffer (get-buffer doc-buffer))
+;;         (let ((win (display-buffer doc-buffer t)))
+;;           (set-window-start win (if start start (point-min))))))))
+
+(defun company-doc--get-doc-string-for-selection (selection)
+  "Get doc string for whatever the SELECTION string should be."
+  (let* ((doc-buffer (or (company-call-backend 'doc-buffer selection)
+                         (user-error "No documentation available.")))
+         start)
+    (when (consp doc-buffer)
+      (setq start (cdr doc-buffer)
+            doc-buffer (car doc-buffer)))
+    (with-current-buffer doc-buffer
+      (save-restriction
+        (widen)
+        (buffer-substring-no-properties
+         (if start start (point-min))
+         (point-max))))))
+
+(defvar company-doc-memoization-table (list))
+
+(defun company-doc--get-doc-string-for-selection-memoized (selection)
+  "Just do the same but memoize it."
+  (let* ((cached (plist-get company-doc-memoization-table selection)))
+    (if cached cached
+      (let ((result (company-doc--get-doc-string-for-selection selection)))
+        (setf company-doc-memoization-table
+              (plist-put company-doc-memoization-table selection result))
+        result))))
+
+(defun company-doc--get-doc-string ()
+  "Get doc string for whatever the selection string should be."
+  (let* ((selection (nth company-selection company-candidates)))
+    (company-doc--get-doc-string-for-selection-memoized selection)))
+
 (defun company-doc-frontend (command)
   "COMMAND is implemented according to the `company-mode' frontends interface."
   (case command
-    (pre-command (message "pre: %s" (car company-candidates)))
-    (post-command (message "post: %s" (car company-candidates)))
-    (hide (message ""))))
+    ;; (pre-command (message "pre: %s" (car company-candidates)))
+    ;; (post-command (message "post: %s" (car company-candidates)))
+    (post-command (company-doc--popper-show (company-doc--get-doc-string)))
+    (hide (message ""))
+    ;; (hide (company-doc--popper-kill))
+    ))
 
 (defun company-doc-enable ()
   "Setup the mode."
