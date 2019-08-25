@@ -41,7 +41,7 @@
 (defvar-local company-doc--timer nil
   "Doc idle timer.")
 
-(defvar company-doc-delay 0.5)
+(defvar company-doc-delay 0.2)
 
 (defun company-doc--set-timer ()
   (when (null company-doc--timer)
