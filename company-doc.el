@@ -163,7 +163,7 @@ If WIN is nil, the selected window is splitted."
 
 (defun company-doc--get-tty-point ()
   "Get the point to place cursor for our tty."
-  (+ company-doc--point 100))
+  (+ company-doc--point 1))
 
 (defun company-doc--show-tooltip (s)
   "Print a tooltip showing S for tty user."
@@ -181,7 +181,8 @@ If WIN is nil, the selected window is splitted."
   "Run the main routine."
   (-> (company-doc--get-doc-string)
       company-doc--popper-show
-      company-doc--show-tooltip))
+      ;; company-doc--show-tooltip
+      ))
 
 (defun company-doc-frontend (command)
   "COMMAND is implemented according to the `company-mode' frontends interface."
