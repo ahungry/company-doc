@@ -109,17 +109,22 @@ If WIN is nil, the selected window is splitted."
 (defun company-doc--get-doc-string-for-selection (selection)
   "Get doc string for whatever the SELECTION string should be."
   (let* ((doc-buffer (or (company-call-backend 'doc-buffer selection)
-                         (user-error "No documentation available.")))
+                         nil
+                         ;; (user-error "No documentation available.")
+                         ))
          start)
-    (when (consp doc-buffer)
-      (setq start (cdr doc-buffer)
-            doc-buffer (car doc-buffer)))
-    (with-current-buffer doc-buffer
-      (save-restriction
-        (widen)
-        (buffer-substring ;; -no-properties
-         (if start start (point-min))
-         (point-max))))))
+    (if doc-buffer
+        (progn
+          (when (consp doc-buffer)
+            (setq start (cdr doc-buffer)
+                  doc-buffer (car doc-buffer)))
+          (with-current-buffer doc-buffer
+            (save-restriction
+              (widen)
+              (buffer-substring ;; -no-properties
+               (if start start (point-min))
+               (point-max)))))
+      "")))
 
 (defvar company-doc-memoization-table (list))
 
@@ -143,6 +148,8 @@ If WIN is nil, the selected window is splitted."
     ;; (pre-command (message "pre: %s" (car company-candidates)))
     ;; (post-command (message "post: %s" (car company-candidates)))
     (post-command (company-doc--popper-show (company-doc--get-doc-string)))
+    ;; (post-command (message (company-doc--get-doc-string)))
+    ;; (post-command (company-doc--popper-show "Heh"))
     (hide (message ""))
     ;; (hide (company-doc--popper-kill))
     ))
