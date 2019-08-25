@@ -36,6 +36,7 @@
 (require 'company)
 (require 'cl-lib)
 (require 'popup)
+(require 'dash)
 
 (defvar-local company-doc--timer nil
   "Doc idle timer.")
@@ -168,7 +169,6 @@ If WIN is nil, the selected window is splitted."
 
 (defun company-doc--show ()
   "Run the main routine."
-  (message "here weo go!")
   (-> (company-doc--get-doc-string)
       company-doc--popper-show
       company-doc--show-tooltip))
