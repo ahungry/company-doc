@@ -128,7 +128,7 @@ If WIN is nil, the selected window is splitted."
           (with-current-buffer doc-buffer
             (save-restriction
               (widen)
-              (buffer-substring ;; -no-properties
+              (buffer-substring-no-properties
                (if start start (point-min))
                (point-max)))))
       "")))
@@ -150,10 +150,20 @@ If WIN is nil, the selected window is splitted."
   (let* ((selection (nth company-selection company-candidates)))
     (company-doc--get-doc-string-for-selection-memoized selection)))
 
-(defun company-doc--get-tty-point ()
+(defun company-doc--get-tty-point-x ()
   "Get the point to place cursor for our tty."
   (let ((points (- (window-end) (window-start))))
      (+ (window-start) (/ points 4))))
+
+(defvar company-doc--point 0)
+
+(defun company-doc--set-point ()
+  "Set the point before we start moving around."
+  (setq company-doc--point (point)))
+
+(defun company-doc--get-tty-point ()
+  "Get the point to place cursor for our tty."
+  (+ company-doc--point 100))
 
 (defun company-doc--show-tooltip (s)
   "Print a tooltip showing S for tty user."
@@ -176,6 +186,7 @@ If WIN is nil, the selected window is splitted."
 (defun company-doc-frontend (command)
   "COMMAND is implemented according to the `company-mode' frontends interface."
   (cl-case command
+    (pre-command (company-doc--set-point))
     ;; (pre-command (message "pre: %s" (car company-candidates)))
     ;; (post-command (message "post: %s" (car company-candidates)))
     (post-command (company-doc--set-timer))
