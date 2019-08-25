@@ -39,22 +39,9 @@
 (defun company-doc--popper-kill ()
   "Kill the reply buffer entirely."
   (interactive)
-  (let ((window-to-delete (selected-window))
-        (buffer-to-kill (current-buffer))
-        (delete-window-hook (lambda () (ignore-errors (delete-window)))))
-    (unwind-protect
-        (progn
-          (add-hook 'kill-buffer-hook delete-window-hook t t)
-          (if (kill-buffer (current-buffer))
-              ;; If `delete-window' failed before, we rerun it to regenerate
-              ;; the error so it can be seen in the echo area.
-              (when (eq (selected-window) window-to-delete)
-                (delete-window))))
-      ;; If the buffer is not dead for some reason (probably because
-      ;; of a `quit' signal), remove the hook again.
-      (ignore-errors
-        (with-current-buffer buffer-to-kill
-          (remove-hook 'kill-buffer-hook delete-window-hook t))))))
+  (let ((window-to-delete (get-buffer-window "*doc-popper*")))
+    (when window-to-delete
+      (delete-window window-to-delete))))
 
 (defun company-doc--popper-focus (buf &optional win)
   "Select the buffer BUF in the window WIN by splitting it.
@@ -150,7 +137,7 @@ If WIN is nil, the selected window is splitted."
     (post-command (company-doc--popper-show (company-doc--get-doc-string)))
     ;; (post-command (message (company-doc--get-doc-string)))
     ;; (post-command (company-doc--popper-show "Heh"))
-    (hide (message ""))
+    (hide (company-doc--popper-kill))
     ;; (hide (company-doc--popper-kill))
     ))
 
