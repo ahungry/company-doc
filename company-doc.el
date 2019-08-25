@@ -35,10 +35,28 @@
 
 (require 'company)
 (require 'cl-lib)
+(require 'popup)
+
+(defvar-local company-doc--timer nil
+  "Doc idle timer.")
+
+(defvar company-doc-delay 0.5)
+
+(defun company-doc--set-timer ()
+  (when (null company-doc--timer)
+    (setq company-doc--timer
+          (run-with-idle-timer company-doc-delay nil
+                               'company-doc--show))))
+
+(defun company-doc--cancel-timer ()
+  (when (timerp company-doc--timer)
+    (cancel-timer company-doc--timer)
+    (setq company-doc--timer nil)))
 
 (defun company-doc--popper-kill ()
   "Kill the reply buffer entirely."
   (interactive)
+  (company-doc--cancel-timer)
   (let ((window-to-delete (get-buffer-window "*doc-popper*")))
     (when window-to-delete
       (delete-window window-to-delete))))
@@ -60,22 +78,23 @@ If WIN is nil, the selected window is splitted."
 (defun company-doc--popper-show (s)
   "Pop up a buffer that we can easily pop-down / close."
   (interactive)
-  (let ((reply-buffer (or (get-buffer "*doc-popper*")
-                          (generate-new-buffer "*doc-popper*")))
-        (this-win (selected-window)))
-    (if (get-buffer-window "*doc-popper*" 'visible)
+  (while-no-input
+    (let ((reply-buffer (or (get-buffer "*doc-popper*")
+                            (generate-new-buffer "*doc-popper*")))
+          (this-win (selected-window)))
+      (if (get-buffer-window "*doc-popper*" 'visible)
+          (progn
+            (set-buffer "*doc-popper*")
+            (erase-buffer)
+            (insert s))
         (progn
-          (set-buffer "*doc-popper*")
-          (erase-buffer)
-          (insert s))
-      (progn
-        (company-doc--popper-focus reply-buffer)
-        (insert s)
-        (add-text-properties (point-min) (point-max)
-                             `(font-lock-face font-lock-comment-face rear-nonsticky t))
-        (font-lock-flush)))
-    (select-window this-win)
-    s))
+          (company-doc--popper-focus reply-buffer)
+          (insert s)
+          (add-text-properties (point-min) (point-max)
+                               `(font-lock-face font-lock-comment-face rear-nonsticky t))
+          (font-lock-flush)))
+      (select-window this-win)))
+  (format "%s" s))
 
 ;; (defun company-show-doc-buffer ()
 ;;   "Temporarily show the documentation buffer for the selection."
@@ -117,6 +136,7 @@ If WIN is nil, the selected window is splitted."
 
 (defun company-doc--get-doc-string-for-selection-memoized (selection)
   "Just do the same but memoize it."
+  (company-doc--cancel-timer)
   (let* ((cached (plist-get company-doc-memoization-table selection)))
     (if cached cached
       (let ((result (company-doc--get-doc-string-for-selection selection)))
@@ -129,12 +149,36 @@ If WIN is nil, the selected window is splitted."
   (let* ((selection (nth company-selection company-candidates)))
     (company-doc--get-doc-string-for-selection-memoized selection)))
 
+(defun company-doc--get-tty-point ()
+  "Get the point to place cursor for our tty."
+  (let ((points (- (window-end) (window-start))))
+     (+ (window-start) (/ points 4))))
+
+(defun company-doc--show-tooltip (s)
+  "Print a tooltip showing S for tty user."
+  (while-no-input
+    (when (stringp s)
+      (with-no-warnings
+        (popup-tip s
+                   :point (company-doc--get-tty-point)
+                   :around t
+                   :scroll-bar t
+                   :margin t))))
+  (format "%s" s))
+
+(defun company-doc--show ()
+  "Run the main routine."
+  (message "here weo go!")
+  (-> (company-doc--get-doc-string)
+      company-doc--popper-show
+      company-doc--show-tooltip))
+
 (defun company-doc-frontend (command)
   "COMMAND is implemented according to the `company-mode' frontends interface."
   (cl-case command
     ;; (pre-command (message "pre: %s" (car company-candidates)))
     ;; (post-command (message "post: %s" (car company-candidates)))
-    (post-command (company-doc--popper-show (company-doc--get-doc-string)))
+    (post-command (company-doc--set-timer))
     ;; (post-command (message (company-doc--get-doc-string)))
     ;; (post-command (company-doc--popper-show "Heh"))
     (hide (company-doc--popper-kill))
