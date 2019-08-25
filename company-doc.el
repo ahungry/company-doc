@@ -7,7 +7,7 @@
 ;; URL: https://github.com/ahungry/company-doc
 ;; Version: 0.0.1
 ;; Keywords: ahungry convenience auto-complete company
-;; Package-Requires: ((emacs "25.1") (company "0.0.1")
+;; Package-Requires: ((emacs "25.1") (company "0.0.1") (dash "0.0.1") (popup "0.0.1"))
 
 ;; This file is NOT part of GNU Emacs.
 
